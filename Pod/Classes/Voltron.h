@@ -6,5 +6,6 @@
 //
 //
 
+#import "WMLCollectionReusableView.h"
 #import "WMLCollectionViewCell.h"
 #import "WMLCollectionView.h"
