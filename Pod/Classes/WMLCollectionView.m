@@ -12,7 +12,11 @@
 #import "WMLCollectionViewCell+Internal.h"
 #import "WMLCollectionViewCellDelegate.h"
 
-@interface WMLCollectionView () <WMLCollectionViewCellDelegate>
+#import "WMLCollectionReusableView.h"
+#import "WMLCollectionReusableView+Internal.h"
+#import "WMLCollectionReusableViewDelegate.h"
+
+@interface WMLCollectionView () <WMLCollectionViewCellDelegate, WMLCollectionReusableViewDelegate>
 
 @end
 
@@ -33,6 +37,25 @@
         cell.contentViewController = controller;
     }
     return cell;
+}
+
+- (id)dequeueReusableSupplementaryViewOfKind:(NSString *)elementKind
+                         withReuseIdentifier:(NSString *)identifier
+                                forIndexPath:(NSIndexPath *)indexPath{
+  WMLCollectionReusableView *cell = [super dequeueReusableSupplementaryViewOfKind:elementKind
+                                                              withReuseIdentifier:identifier
+                                                                     forIndexPath:indexPath];
+  if (![cell isKindOfClass:[WMLCollectionReusableView class]]) {
+    return cell;
+  }
+  cell.delegate = self;
+  if (!cell.contentViewController) {
+    UIViewController *controller = [self.dataSource collectionView:self
+                                           controllerForIdentifier:identifier];
+    NSAssert(controller && [controller isKindOfClass:[UIViewController class]], @"The collection view's data source did not return a valid view controller for identifier %@", identifier);
+    cell.contentViewController = controller;
+  }
+  return cell;
 }
 
 #pragma mark - Public
@@ -72,6 +95,18 @@
 - (void)collectionViewCellWillPrepareForReuse:(WMLCollectionViewCell *)cell {
     [self _hostViewController:cell.contentViewController
                 withHostView:cell.contentView];
+}
+
+#pragma mark - WMLCollectionReusableViewDelegate
+
+- (void)collectionReusableView:(WMLCollectionReusableView *)reusableView willMoveToWindow:(UIWindow *)window {
+  [self _hostViewController:reusableView.contentViewController
+               withHostView:reusableView];
+}
+
+- (void)collectionReusableViewWillPrepareForReuse:(WMLCollectionReusableView *)reusableView {
+  [self _hostViewController:reusableView.contentViewController
+               withHostView:reusableView];
 }
 
 @end
